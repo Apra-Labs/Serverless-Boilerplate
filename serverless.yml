@@ -1,0 +1,64 @@
+service: apra-serverless
+frameworkVersion: "3"
+
+custom:
+  client:
+    bucketName: ${self:custom.websiteBucketName.${sls:stage}}
+  stage: "${sls:stage}"
+  websiteBucketName:
+    dev: apra-${sls:stage}.com
+    prod: apra-${sls:stage}.com
+  
+  dynamodb:
+    start:
+      migarte: true
+    stages:
+      - dev
+      - prod
+
+provider: 
+  name: aws
+  runtime: nodejs18.x
+  region: us-east-1
+  timeout: 30
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:Query
+            - dynamodb:Scan
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+          Resource:
+            - "Fn::GetAtt": [UsersTable, Arn]
+  environment:
+    STAGE: ${self:custom.stage}
+
+functions:
+  hello:
+    handler: handler.hello
+    events:
+      - httpApi: '*'
+
+resources:
+  Resources:
+    UsersTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: userId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: userId
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+        TableName: ${self:custom.usersTableName}
+
+plugins:
+ - serverless-finch
+ - serverless-prune-plugin
+
+          
