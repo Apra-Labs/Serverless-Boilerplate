@@ -6,7 +6,7 @@ export const createUser = async (input: UserInput): Promise<any> => {
     try {
         const userId = getNewGuid();
         const userInput: UserInput = {
-            id: userId,
+            userId: userId,
             userName: input.userName,
             userEmail: input.userEmail,
             userAddress: input.userAddress,
@@ -48,7 +48,7 @@ export const updateUser = async (input: UpdateInput) => {
         const params = {
             TableName: process.env.USERS_TABLE,
             primaryKey: {
-                id: input.id
+                userId: input.userId
             },
             updateKey: {
                 userName: input.userName,
@@ -72,7 +72,8 @@ export const deleteUser = async (input: DeleteInput) => {
         const params = {
             TableName: process.env.USERS_TABLE,
             Key: {
-                id: input.id
+                userId: input.userId
+
             }
         }
 

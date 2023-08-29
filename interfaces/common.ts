@@ -1,7 +1,7 @@
 
 export interface API_RESPONSE {
     statusCode?: number,
-    data: any;
+    data?: any;
     error?: any;
     token?: string;
 }

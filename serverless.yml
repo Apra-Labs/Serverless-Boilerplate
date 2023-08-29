@@ -1,26 +1,21 @@
-service: apra-serverless
+service: apra-sls-nodejs
 frameworkVersion: "3"
+useDotenv: true
 
-custom:
-  client:
-    bucketName: ${self:custom.websiteBucketName.${sls:stage}}
-  stage: "${sls:stage}"
-  websiteBucketName:
-    dev: apra-${sls:stage}.com
-    prod: apra-${sls:stage}.com
-  
-  dynamodb:
-    start:
-      migarte: true
-    stages:
-      - dev
-      - prod
+custom: 
+  client: 
+    bucketName: apra-sls-nodejs-${opt:stage}
+    indexDocument: index.html
+    errorDocument: index.html
+  prune:
+    automatic: true
+    number: 3
 
 provider: 
   name: aws
+  stage: dev
+  region: ap-south-1
   runtime: nodejs18.x
-  region: us-east-1
-  timeout: 30
   iam:
     role:
       statements:
@@ -33,18 +28,51 @@ provider:
             - dynamodb:UpdateItem
             - dynamodb:DeleteItem
           Resource:
-            - "Fn::GetAtt": [UsersTable, Arn]
+            - Fn::GetAtt: [UsersTable, Arn]
   environment:
-    STAGE: ${self:custom.stage}
+    USERS_TABLE: ${env:USERS_TABLE}
+    MEDIA_BUCKET: ${env:MEDIA_BUCKET}
 
 functions:
-  hello:
-    handler: handler.hello
+  handler:
+    handler: dist/index.handler
     events:
-      - httpApi: '*'
+      - httpApi: "*"
+    role: arn:aws:iam::${env:AWS_ACCOUNT_ID}:role/apra-sls-nodejs-lambda-role
 
 resources:
   Resources:
+    # S3Bucket:
+    #   Type: 'AWS::S3::Bucket'
+    #   Properties:
+    #     BucketName: ${env:MEDIA_BUCKET}
+    #     PublicAccessBlockConfiguration:
+    #       BlockPublicAcls: false
+    #       BlockPublicPolicy: false
+    #       IgnorePublicAcls: false
+    #       RestrictPublicBuckets: false
+    #     OwnershipControls:
+    #       Rules:
+    #         - ObjectOwnership: BucketOwnerPreferred
+    #     AccessControl: AwsExecRead              
+    
+    # S3BucketPolicy:
+    #   Type: 'AWS::S3::BucketPolicy'
+    #   Properties:
+    #     Bucket:
+    #       Ref: 'S3Bucket'
+    #     PolicyDocument:
+    #       Version: '2012-10-17'
+    #       Statement:
+    #         - Effect: Allow
+    #           Principal: '*'
+    #           Action: 's3:GetObject'
+    #           Resource:
+    #             Fn::Join:
+    #               - ''  
+    #               - - 'arn:aws:s3:::'
+    #                 - Ref: 'S3Bucket'
+    #                 - '/*'
     UsersTable:
       Type: AWS::DynamoDB::Table
       Properties:
@@ -55,10 +83,12 @@ resources:
           - AttributeName: userId
             KeyType: HASH
         BillingMode: PAY_PER_REQUEST
-        TableName: ${self:custom.usersTableName}
+        TableName: ${env:USERS_TABLE}
 
 plugins:
  - serverless-finch
  - serverless-prune-plugin
+ - serverless-dotenv-plugin
+ - serverless-offline
 
           

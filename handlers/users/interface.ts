@@ -1,5 +1,5 @@
 export interface UserInput {
-    id: string;
+    userId: string;
     userName: string;
     userEmail: string;
     userAddress: string;
@@ -8,12 +8,12 @@ export interface UserInput {
 }
 
 export interface UpdateInput {
-    id: string;
+    userId: string;
     userName: string;
     userAddress: string;
 }
 
 export interface DeleteInput {
-    id: string;
+    userId: string;
 }
 

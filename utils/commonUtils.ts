@@ -1,5 +1,6 @@
 import { v4 as uuidv4 } from "uuid";
 import { API_RESPONSE } from "../interfaces/common";
+import statusCodes from "../constants/statusCode.json";
 
 
 export const getCommonAPIResponseByData = (data: any, token?: string): API_RESPONSE => {
@@ -26,9 +27,9 @@ export const getCommonAPIResponse = (param: API_RESPONSE = {
 }): API_RESPONSE => {
     const resp: API_RESPONSE = param;
     if (param.error && !param.statusCode) {
-        resp.statusCode = 500;
+        resp.statusCode = statusCodes.INTERNAL_SERVER_ERROR;
     } else if (!param.error && !param.statusCode && param.data) {
-        resp.statusCode = 200;
+        resp.statusCode = statusCodes.OK;
     }
     return resp;
 }

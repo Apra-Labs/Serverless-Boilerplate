@@ -4,7 +4,7 @@ import { DeleteCommand, DynamoDBDocumentClient, PutCommand, ScanCommand, UpdateC
 import { DB_PARAM_KEY, DB_PARAM_UPDATE, DB_UPDATE_INPUT, DELETE_DOC_PARAMS, INSERT_DOC_PARAMS, SCAN_DOC_PARAMS, UPDATE_DOC_PARAMS } from "../interfaces/common";
 
 const dynamoClient = new DynamoDBClient({
-    endpoint: "http://localhost:8000",
+    // endpoint: "http://localhost:8000",
 });
 
 const dynamoDBDocumentClient = DynamoDBDocumentClient.from(dynamoClient);

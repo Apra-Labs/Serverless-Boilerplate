@@ -1,15 +1,20 @@
 import { getUsers } from "../users/handler";
 import jwt from "jsonwebtoken";
+import statusCodes from "../../constants/statusCode.json";
 import { loginInput } from "./interface";
+import { getCommonAPIResponseByError } from "../../utils/commonUtils";
 
 
 export const login = async (input: loginInput) => {
     const users = await getUsers();
     try {
+        if (!users) {
+            getCommonAPIResponseByError('No users found');
+        }
         const user = users.data.find(user => user.userEmail === input.email);
         if (!user) {
             const err = new Error('The email you entered is not registered.');
-            err['status'] = 400;
+            err['status'] = statusCodes.BAD_REQUEST;
             throw err;
         } else if (user.userPassword == input.password) {
             const tokenPayload = {
@@ -27,7 +32,7 @@ export const login = async (input: loginInput) => {
               };
         } else {
             const err = new Error('The password you entered is incorrect.');
-            err['status'] = 400;
+            err['status'] = statusCodes.BAD_REQUEST;
             throw err;
         }
     } catch (err) {
