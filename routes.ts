@@ -1,7 +1,8 @@
 import express from "express";
 import { Request, Response } from "express";
-import { login } from "./handlers/authentication/handler";
-import { processRequest } from "./utils/commonUtils";
+import { login } from "./src//handlers/authentication/handler";
+import { processRequest } from "./src/utils/commonUtils";
+import { createS3Bucket } from "./src/utils/s3";
 export const router = express.Router();
 
 
@@ -12,6 +13,12 @@ router.get('/', (req: Request, res: Response) => {
 
 router.post('/login', async (req: Request, res: Response) => {
     processRequest(req, res, login);
+});
+
+router.post('/createBucket', async (req: Request, res: Response) => {
+    createS3Bucket(req.body.bucketName, true).then((resp) => {
+        res.send(resp);
+    });
 });
 
 

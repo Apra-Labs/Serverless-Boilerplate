@@ -13,6 +13,15 @@ export interface UpdateInput {
     userAddress: string;
 }
 
+export interface UpdateUserImage {
+    userId: string;
+    userImage: string;
+}
+
+export interface UpdateUserFile {
+    userId: string;
+}
+
 export interface DeleteInput {
     userId: string;
 }

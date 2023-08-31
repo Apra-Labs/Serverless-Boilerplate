@@ -50,3 +50,11 @@ export interface DB_PARAM_UPDATE extends DB_PARAM_MANDATORY {
     UpdateExpression: string;
     Key: DB_PARAM_KEY;
 }
+
+export interface FileUploadParams {
+    type: string;
+    bucketName: string;
+    fileName: string;
+    fileContent: any;
+    fileEncoding?: string;
+}
