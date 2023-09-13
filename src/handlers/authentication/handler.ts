@@ -1,44 +1,42 @@
-import { getUsers } from "../users/handler";
-import jwt from "jsonwebtoken";
-import statusCodes from "../../constants/statusCode.json";
+import { getUserByEmailAndPwd } from "../users/handler";
+import { StatusCodes } from "http-status-codes";
 import { loginInput } from "./interface";
-import { getCommonAPIResponseByError } from "../../utils/commonUtils";
+import { getCommonAPIResponse, getCommonAPIResponseByError, signJWT } from "../../utils/commonUtils";
 
 
 export const login = async (input: loginInput) => {
-    const users = await getUsers();
+    const users = await getUserByEmailAndPwd({
+        userEmail: input.userEmail,
+        userPassword: input.userPassword
+    });
     try {
         if (!users) {
             getCommonAPIResponseByError('No users found');
         }
-        const user = users.data.find(user => user.userEmail === input.email);
+        const user = users.data.find(user => user.userEmail === input.userEmail);
+
         if (!user) {
-            const err = new Error('The email you entered is not registered.');
-            err['status'] = statusCodes.BAD_REQUEST;
+
+            const err = new Error('The email or password you entered is incorrect.');
+            err['status'] = StatusCodes.BAD_REQUEST;
             throw err;
-        } else if (user.userPassword == input.password) {
+
+        } else if (user.userPassword == input.userPassword) {
+
             const tokenPayload = {
-                email: user.email
+                email: user.userEmail
             };
-            const accessToken = jwt.sign(tokenPayload, process.env.JWT_SECRET_KEY, {
-                expiresIn: process.env.JWT_EXPIRES_IN,
-            });
-            return {
-                status: 'success',
-                message: 'User Logged In!',
-                data: {
-                  accessToken,
-                },
-              };
+            const accessToken = signJWT(tokenPayload);
+            return getCommonAPIResponse({ message: 'success', data: { accessToken }, statusCode: StatusCodes.OK });
+
         } else {
-            const err = new Error('The password you entered is incorrect.');
-            err['status'] = statusCodes.BAD_REQUEST;
+
+            const err = new Error('The email and password entered is incorrect.');
+            err['statusCode'] = StatusCodes.BAD_REQUEST;
             throw err;
+            
         }
     } catch (err) {
-        return {
-            status: 'error',
-            message: err.message,
-        };
+        return getCommonAPIResponse({ error: err, statusCode: err.status, message: err.message });
     }
 }

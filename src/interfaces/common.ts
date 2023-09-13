@@ -3,6 +3,7 @@ export interface API_RESPONSE {
     statusCode?: number,
     data?: any;
     error?: any;
+    message?: string;
     token?: string;
 }
 
@@ -21,6 +22,10 @@ export interface INSERT_DOC_PARAMS {
 
 export interface SCAN_DOC_PARAMS {
     TableName: string;
+    FilterExpression?: string;
+    ExpressionAttributeValues?: DB_PARAM_KEY;
+    ResponseKeys?: string;
+    ExclusiveStartKey?: any;
 }
 
 export interface DELETE_DOC_PARAMS {
@@ -57,4 +62,10 @@ export interface FileUploadParams {
     fileName: string;
     fileContent: any;
     fileEncoding?: string;
+}
+
+export interface S3GetSignedURLParam {
+    bucketName: string;
+    objectName: string;
+    expiryTime: number;
 }

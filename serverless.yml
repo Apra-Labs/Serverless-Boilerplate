@@ -16,6 +16,7 @@ provider:
   stage: dev
   region: ap-south-1
   runtime: nodejs18.x
+  profile: serverlessProfile
   iam:
     role:
       statements:
@@ -89,6 +90,4 @@ plugins:
  - serverless-finch
  - serverless-prune-plugin
  - serverless-dotenv-plugin
- - serverless-offline
-
-          
+ - serverless-offline   

@@ -1,9 +1,9 @@
 import express from "express";
 import { Request, Response } from "express";
 import { processRequest } from "../../utils/commonUtils";
-import { createUser, deleteUser, deleteUserFile, getUsers, updateUser, updateUserFile, updateUserImage } from "./handler";
 import { auth } from "../../middleware/auth";
 import { API_RESPONSE } from "../../interfaces/common";
+import { createUser, deleteUser, deleteUserFile, getUsers, updateUser, updateUserFile, updateUserImage } from "./handler";
 
 export const router = express.Router();
 

@@ -1,12 +1,14 @@
+import logger from "../../utils/logger";
 import { getCommonAPIResponseByData, getCommonAPIResponseByError, getNewGuid } from "../../utils/commonUtils";
-import { deleteDoc, insertDoc, scanDocs, updateDoc } from "../../utils/dynamoDB";
+import { deleteDoc, insertDoc, queryDoc, scanDocs, updateDoc } from "../../utils/dynamoDB";
 import { DeleteFileFromS3, uploadFileToS3 } from "../../utils/s3";
-import { DeleteInput, UpdateInput, UpdateUserImage, UserInput } from "./interface";
+import { DeleteInput, UpdateInput, UpdateUserImage, UserInput, UserInputDoc } from "./interface";
+import { loginInput } from "../authentication/interface";
 
 export const createUser = async (input: UserInput): Promise<any> => {
     try {
         const userId = getNewGuid();
-        const userInput: UserInput = {
+        const userInput: UserInputDoc = {
             userId: userId,
             userName: input.userName,
             userEmail: input.userEmail,
@@ -14,16 +16,16 @@ export const createUser = async (input: UserInput): Promise<any> => {
             userPhone: input.userPhone,
             userPassword: input.userPassword
         }
+
         const params = {
             TableName: process.env.USERS_TABLE,
             Item: userInput
         }
         const data = await insertDoc(params);
-        console.log(data);
+        logger.info(data);
 
-        return getCommonAPIResponseByData({success: true});
+        return getCommonAPIResponseByData({ success: true });
     } catch (err) {
-        console.error("Create User Failed");
         throw getCommonAPIResponseByError(err);
     }
 }
@@ -32,10 +34,54 @@ export const createUser = async (input: UserInput): Promise<any> => {
 export const getUsers = async (): Promise<any> => {
     try {
         const params = {
-            TableName: process.env.USERS_TABLE
+            tableName: process.env.USERS_TABLE
         }
 
-        const data = await scanDocs(params);
+        const data = await scanDocs(params.tableName, {});
+        logger.info(data);
+
+        return getCommonAPIResponseByData(data);
+    } catch (err) {
+        console.error(err);
+        throw getCommonAPIResponseByError(err);
+    }
+}
+
+export const getUserByEmailAndPwd = async (input: loginInput) => {
+    try {
+        const params = {
+            tableName: process.env.USERS_TABLE,
+        }
+
+        const data = await scanDocs(params.tableName, {
+            FilterExpression: "userEmail = :userEmail and userPassword = :userPassword",
+            ExpressionAttributeValues: {
+                ":userEmail": input.userEmail,
+                ":userPassword": input.userPassword
+            }
+        });
+        return getCommonAPIResponseByData(data);
+    } catch (err) {
+
+    }
+}
+
+export const queryUserFromDB = async (input: object): Promise<any> => {
+    try {
+        const params = {
+            TableName: process.env.USERS_TABLE,
+            KeyConditionExpression: "userEmail == :key and userPassword == :key2",
+            ExpressionAttributeValues: {
+                ":key": {
+                    "S": input['email']
+                },
+                ":key2": {
+                    "S": input['password']
+                }
+            }
+        }
+
+        const data = await queryDoc(params);
 
         return getCommonAPIResponseByData(data);
     } catch (err) {
@@ -47,7 +93,7 @@ export const getUsers = async (): Promise<any> => {
 export const updateUser = async (input: UpdateInput) => {
     try {
         const params = {
-            TableName: process.env.USERS_TABLE,
+            TableName: process.env.USERS_TABLE,//common place for tablename
             primaryKey: {
                 userId: input.userId
             },
@@ -58,7 +104,6 @@ export const updateUser = async (input: UpdateInput) => {
         }
 
         const data = await updateDoc(params);
-        console.log(data);
 
         return getCommonAPIResponseByData(data);
     } catch (err) {
@@ -79,7 +124,6 @@ export const deleteUser = async (input: DeleteInput) => {
         }
 
         const data = await deleteDoc(params);
-        console.log(data);
 
         return getCommonAPIResponseByData(data);
     } catch (error) {
@@ -93,14 +137,14 @@ export const updateUserImage = async (input: UpdateUserImage) => {
         const userImageName = getNewGuid();
 
         const resp = await uploadFileToS3({
-            bucketName: process.env.MEDIA_BUCKET, 
-            fileName :userImageName,
-            fileContent :input.userImage,
-            type :'image/jpeg',
+            bucketName: process.env.MEDIA_BUCKET,
+            fileName: userImageName,
+            fileContent: input.userImage,
+            type: 'image/jpeg',
             fileEncoding: 'base64'
         });
         console.log(resp);
-        if(resp) {
+        if (resp) {
             const params = {
                 TableName: process.env.USERS_TABLE,
                 primaryKey: {
@@ -127,27 +171,27 @@ export const updateUserFile = async (input) => {
     try {
         const userFileName = getNewGuid();
         const resp = await uploadFileToS3({
-            bucketName: process.env.MEDIA_BUCKET, 
-            fileName :userFileName,
-            fileContent :input.files.userFile.data,
-            type :input.files.userFile.mimetype,
+            bucketName: process.env.MEDIA_BUCKET,
+            fileName: userFileName,
+            fileContent: input.files.userFile.data,
+            type: input.files.userFile.mimetype,
         });
 
         console.log(resp);
-        if(resp) {
-            const params = {
-                TableName: process.env.USERS_TABLE,
-                primaryKey: {
-                    id: input.body.id
-                },
-                updateKey: {
-                    userFile: userFileName
-                }
-            }
+        // if(resp) {
+        //     const params = {
+        //         TableName: process.env.USERS_TABLE,
+        //         primaryKey: {
+        //             userId: input.body.userId
+        //         },
+        //         updateKey: {
+        //             userFile: userFileName
+        //         }
+        //     }
 
-            const data = await updateDoc(params);
-            console.log(data);
-        }
+        //     const data = await updateDoc(params);
+        //     console.log(data);
+        // }
         return getCommonAPIResponseByData({
             success: true,
         });
@@ -160,27 +204,39 @@ export const deleteUserFile = async (input) => {
     try {
 
         const resp = await DeleteFileFromS3(process.env.MEDIA_BUCKET, input.userFile);
-        
+
         console.log(resp);
 
         // if(resp) {
         //     const params = {
-        //         TableName: process.env.USERS_TABLE,
+        //         TableName: process.env.USERS_TABLE1,
         //         primaryKey: {
-        //             id: input.id
+        //             userId: input.userId
         //         },
         //         updateKey: {
         //             userFile: null
         //         }
         //     }
-    
+
         //     const data = await updateDoc(params);
         //     console.log(data);
         // }
-        
 
-        return getCommonAPIResponseByData({success: true});
-    } catch (err) { 
+
+        return getCommonAPIResponseByData({ success: true });
+    } catch (err) {
+        getCommonAPIResponseByError(err);
+    }
+}
+
+
+export const getUser = async (input) => {
+    try {
+
+        const data = await scanDocs(process.env.userTable, { Key: { userId: input.userId } });
+        
+        return getCommonAPIResponseByData(data);
+    } catch (err) {
         getCommonAPIResponseByError(err);
     }
 }

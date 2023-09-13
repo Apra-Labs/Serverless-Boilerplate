@@ -1,10 +1,13 @@
 export interface UserInput {
-    userId: string;
     userName: string;
     userEmail: string;
     userAddress: string;
     userPhone: number;
     userPassword: string;
+}
+
+export interface UserInputDoc extends UserInput {
+    userId: string;
 }
 
 export interface UpdateInput {
