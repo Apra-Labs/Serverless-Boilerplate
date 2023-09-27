@@ -1,32 +1,55 @@
 import { CreateTableCommand, DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { DeleteCommand, DynamoDBDocumentClient, PutCommand, QueryCommand, ScanCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
-import { DB_PARAM_KEY, DB_PARAM_UPDATE, DB_UPDATE_INPUT, DELETE_DOC_PARAMS, INSERT_DOC_PARAMS, UPDATE_DOC_PARAMS } from "../interfaces/common";
+import { DeleteCommand, DynamoDBDocumentClient, PutCommand, QueryCommand, ScanCommand, UpdateCommand, GetCommand } from "@aws-sdk/lib-dynamodb";
+import { CREATE_TABLE_PARAMS, DB_PARAM_KEY, DB_PARAM_UPDATE, DB_UPDATE_INPUT, DELETE_DOC_PARAMS, GET_DOC_PARAMS, INSERT_DOC_PARAMS, UPDATE_DOC_PARAMS } from "../interfaces/common";
 
 const dynamoClient = new DynamoDBClient({
+    // endpoint: 'http://localhost:8000',
 });
 
 const dynamoDBDocumentClient = DynamoDBDocumentClient.from(dynamoClient);
 
 
-export const createTableIfNotExists = async (tableName: string, primaryKey: string) => {
+export const createTableIfNotExists = async (inputParams: CREATE_TABLE_PARAMS) => {
     return new Promise((resolve, reject) => {
         try {
-            const params = {
-                TableName: tableName,
+            const params: any = {
+                TableName: inputParams.tableName,
                 AttributeDefinitions: [
                     {
-                        AttributeName: primaryKey,
+                        AttributeName: inputParams.primaryKey,
                         AttributeType: "S"
                     }
                 ],
                 KeySchema: [
                     {
-                        AttributeName: primaryKey,
+                        AttributeName: inputParams.primaryKey,
                         KeyType: "HASH"
                     }
                 ],
                 BillingMode: "PAY_PER_REQUEST",
             }
+
+            // Adding a Global Secondary Index
+            if (inputParams.gsiIndexName && inputParams.gsiAttributeName) {
+                params.GlobalSecondaryIndexes = [
+                  {
+                    IndexName: inputParams.gsiIndexName,
+                    KeySchema: [
+                      {
+                        AttributeName: inputParams.gsiAttributeName,
+                        KeyType: 'HASH',
+                      },
+                    ],
+                    Projection: {
+                      ProjectionType: 'ALL',
+                    },
+                  },
+                ];
+                params.AttributeDefinitions.push({
+                  AttributeName: inputParams.gsiAttributeName,
+                  AttributeType: 'S',
+                });
+              }
 
 
             dynamoDBDocumentClient.send(new CreateTableCommand(params), (err, data) => {
@@ -61,6 +84,22 @@ export const insertDoc = (params: INSERT_DOC_PARAMS): Promise<DB_PARAM_KEY | und
     });
 }
 
+export const getDoc = (params: GET_DOC_PARAMS): Promise<DB_PARAM_KEY | undefined> => {
+    return new Promise((resolve, reject) => {
+        try {
+            dynamoDBDocumentClient.send(new GetCommand(params), (err, data) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(data.Item);
+                }
+            });
+        } catch (err) {
+            reject(err);
+        }
+    })
+}
+
 
 export const queryDoc = (params): Promise<DB_PARAM_KEY | undefined> => {
     return new Promise((resolve, reject) => {
@@ -70,7 +109,7 @@ export const queryDoc = (params): Promise<DB_PARAM_KEY | undefined> => {
                     reject(err);
                 }
                 else {
-                    resolve(data);
+                    resolve(data.Items);
                 }
             });
         } catch (err) {
@@ -78,48 +117,6 @@ export const queryDoc = (params): Promise<DB_PARAM_KEY | undefined> => {
         }
     });
 }
-
-// export const scanDocs = (params: SCAN_DOC_PARAMS): Promise<any[]> => {
-//     const keyObj: DB_PARAM_KEY = {
-//         FilterExpression: params.FilterExpression || "",
-//         ExpressionAttributeValues: params.ExpressionAttributeValues || {},
-//     }
-//     console.log(params);
-//     return new Promise(async (resolve, reject) => {
-//         try {
-//             const data: any[] = [];
-//             let resp: any = {};
-//             do {
-//                 resp = await scanDocsHelper(params.TableName, keyObj, params.ResponseKeys, resp.LastEvaluatedKey);
-//                 if (resp?.Items?.length) {
-//                     data.push(...resp.Items);
-//                 }
-//             } while (resp.LastEvaluatedKey);
-//             resolve(data);
-//         } catch (err) {
-//             reject(err);
-//         }
-//     });
-// }
-
-
-// export const scanDocsHelper = (tableName: string, keyObj: DB_PARAM_KEY, responsekeys = "", exclusiveStartKey:any = ""): Promise<DB_PARAM_KEY | undefined> => {
-//     return new Promise((resolve, reject) => {
-//         try {
-//             dynamoDBDocumentClient.send(new ScanCommand( getDBParamScan(tableName, keyObj, responsekeys, exclusiveStartKey)), (err, data) => {
-//                 if (err) {
-//                     reject(err);
-//                 }
-//                 else {
-//                     resolve(data.Items);
-//                 }
-//             });
-//         } catch (err) {
-//             reject(err);
-//         }
-//     });
-// }
-
 
 export const deleteDoc = (params: DELETE_DOC_PARAMS): Promise<DB_PARAM_KEY | undefined> => {
     return new Promise((resolve, reject) => {
@@ -143,11 +140,9 @@ export const updateDoc = (params: UPDATE_DOC_PARAMS): Promise<DB_PARAM_KEY | und
             const updateParams = getDBParamUpdate(params.TableName, params);
             dynamoDBDocumentClient.send(new UpdateCommand(updateParams), (err, data) => {
                 if (err) {
-                    console.log(params);
-                    console.error(err);
                     reject(err);
                 } else {
-                    resolve(data);
+                    resolve(data.Attributes);
                 }
             });
         } catch (err) {
@@ -207,9 +202,6 @@ export const updateDoc = (params: UPDATE_DOC_PARAMS): Promise<DB_PARAM_KEY | und
 //     if (!exclusiveStartKey) {
 //         delete dbParam.ExclusiveStartKey;
 //     }
-//     // if (!KeyConditionExpression) {
-//     //     delete dbParam.KeyConditionExpression;
-//     // }
 //     let query = keyObj.FilterExpression || "";
 //     const expressionAttributeValues: DB_PARAM_KEY = {};
 //     if (!query) {

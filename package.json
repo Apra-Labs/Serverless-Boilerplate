@@ -6,7 +6,8 @@
   "scripts": {
     "start": "tsc && node dist/index.js",
     "lint": "eslint . --ext .ts",
-    "test": "jest"
+    "test": "jest",
+    "local":"tsc && node dist/index.js local"
   },
   "keywords": [],
   "author": "",

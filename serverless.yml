@@ -1,10 +1,10 @@
-service: apra-sls-nodejs
+service: ${env:SERVERLESS_PREFIX}
 frameworkVersion: "3"
 useDotenv: true
 
 custom: 
   client: 
-    bucketName: apra-sls-nodejs-${opt:stage}
+    bucketName: ${env:SERVERLESS_PREFIX}-${opt:stage}
     indexDocument: index.html
     errorDocument: index.html
   prune:
@@ -39,41 +39,41 @@ functions:
     handler: dist/index.handler
     events:
       - httpApi: "*"
-    role: arn:aws:iam::${env:AWS_ACCOUNT_ID}:role/apra-sls-nodejs-lambda-role
+    role: arn:aws:iam::${env:AWS_ACCOUNT_ID}:role/${env:SERVERLESS_PREFIX}-lambda-role
 
 resources:
   Resources:
-    # S3Bucket:
-    #   Type: 'AWS::S3::Bucket'
-    #   Properties:
-    #     BucketName: ${env:MEDIA_BUCKET}
-    #     PublicAccessBlockConfiguration:
-    #       BlockPublicAcls: false
-    #       BlockPublicPolicy: false
-    #       IgnorePublicAcls: false
-    #       RestrictPublicBuckets: false
-    #     OwnershipControls:
-    #       Rules:
-    #         - ObjectOwnership: BucketOwnerPreferred
-    #     AccessControl: AwsExecRead              
+    S3Bucket:
+      Type: 'AWS::S3::Bucket'
+      Properties:
+        BucketName: ${env:MEDIA_BUCKET}
+        PublicAccessBlockConfiguration:
+          BlockPublicAcls: false
+          BlockPublicPolicy: false
+          IgnorePublicAcls: false
+          RestrictPublicBuckets: false
+        OwnershipControls:
+          Rules:
+            - ObjectOwnership: BucketOwnerPreferred
+        AccessControl: AwsExecRead              
     
-    # S3BucketPolicy:
-    #   Type: 'AWS::S3::BucketPolicy'
-    #   Properties:
-    #     Bucket:
-    #       Ref: 'S3Bucket'
-    #     PolicyDocument:
-    #       Version: '2012-10-17'
-    #       Statement:
-    #         - Effect: Allow
-    #           Principal: '*'
-    #           Action: 's3:GetObject'
-    #           Resource:
-    #             Fn::Join:
-    #               - ''  
-    #               - - 'arn:aws:s3:::'
-    #                 - Ref: 'S3Bucket'
-    #                 - '/*'
+    S3BucketPolicy:
+      Type: 'AWS::S3::BucketPolicy'
+      Properties:
+        Bucket:
+          Ref: 'S3Bucket'
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Principal: '*'
+              Action: 's3:GetObject'
+              Resource:
+                Fn::Join:
+                  - ''  
+                  - - 'arn:aws:s3:::'
+                    - Ref: 'S3Bucket'
+                    - '/*'
     UsersTable:
       Type: AWS::DynamoDB::Table
       Properties:

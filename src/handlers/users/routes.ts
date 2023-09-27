@@ -3,7 +3,7 @@ import { Request, Response } from "express";
 import { processRequest } from "../../utils/commonUtils";
 import { auth } from "../../middleware/auth";
 import { API_RESPONSE } from "../../interfaces/common";
-import { createUser, deleteUser, deleteUserFile, getUsers, updateUser, updateUserFile, updateUserImage } from "./handler";
+import { createUser, deleteUser, deleteUserFile, getUserById, getUsers, updateUser, updateUserFile, updateUserImage } from "./handler";
 
 export const router = express.Router();
 
@@ -21,6 +21,10 @@ router.delete('/', auth, (req: Request, res: Response) => {
 
 router.post('/', auth, (req: Request, res: Response) => {
     processRequest(req, res, updateUser);
+});
+
+router.get('/getUser', auth, (req: Request, res: Response) => {
+    processRequest(req, res, getUserById);
 });
 
 router.post('/uploadImage', auth, (req: Request, res: Response) => {

@@ -1,6 +1,6 @@
 import express from "express";
 import { Request, Response } from "express";
-import { login } from "./src//handlers/authentication/handler";
+import { login } from "./src/handlers/authentication/handler";
 import { processRequest } from "./src/utils/commonUtils";
 import { createS3Bucket } from "./src/utils/s3";
 export const router = express.Router();

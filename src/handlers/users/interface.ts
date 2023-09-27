@@ -6,6 +6,10 @@ export interface UserInput {
     userPassword: string;
 }
 
+export interface GetUserInput {
+    userId: string;
+}
+
 export interface UserInputDoc extends UserInput {
     userId: string;
 }

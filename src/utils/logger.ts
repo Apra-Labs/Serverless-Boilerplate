@@ -1,5 +1,6 @@
 import winston from "winston";
-import DailyRotateFile = require("winston-daily-rotate-file");
+// import DailyRotateFile = require("winston-daily-rotate-file");
+// import serverConfig from "../../serverConfig";
 
 const levels = {
     error: 0,
@@ -33,21 +34,21 @@ const consoleFormat = winston.format.combine(
     ),
 );
 
-const fileFormat = winston.format.combine(
-    winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss:ms' }),
-    winston.format.printf(
-        (info) => `${info.timestamp} ${info.level}: ${info.message}`,
-    ),
-    winston.format.json(),
-);
+// const fileFormat = winston.format.combine(
+//     winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss:ms' }),
+//     winston.format.printf(
+//         (info) => `${info.timestamp} ${info.level}: ${info.message}`,
+//     ),
+//     winston.format.json(),
+// );
 
-const fileRotateTransport = new DailyRotateFile({
-    filename: "logs/%DATE%.log",
-    datePattern: "DD-MM-YYYY",
-    maxFiles: "14d",
-    handleExceptions: true,
-    format: fileFormat,
-});
+// const fileRotateTransport = new DailyRotateFile({
+//     filename: serverConfig.fileLogPath,
+//     datePattern: serverConfig.fileLogDatePattern,
+//     maxFiles: serverConfig.fileLogMaxFiles,
+//     handleExceptions: true,
+//     format: fileFormat,
+// });
 
 const transports = [
     new winston.transports.Console(
@@ -55,8 +56,14 @@ const transports = [
             format: consoleFormat,
         }
     ),
-    fileRotateTransport,
 ]
+
+// {
+//     console.log('process.env.NODE_ENV', process.env.NODE_ENV)
+//     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+//     //@ts-ignore
+//     process.env.NODE_ENV === 'local' && transports.push(fileRotateTransport)
+// }
 
 const logger = winston.createLogger({
     level: level(),

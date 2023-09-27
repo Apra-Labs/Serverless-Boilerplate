@@ -1,10 +1,16 @@
-
 export interface API_RESPONSE {
     statusCode?: number,
     data?: any;
     error?: any;
     message?: string;
     token?: string;
+}
+
+export interface CREATE_TABLE_PARAMS {
+    tableName: string;
+    primaryKey: string;
+    gsiIndexName?: string;
+    gsiAttributeName?: string;
 }
 
 export interface DB_PARAMS {
@@ -18,6 +24,11 @@ export interface DB_PARAM_KEY {
 export interface INSERT_DOC_PARAMS {
     TableName: string;
     Item: object;
+}
+
+export interface GET_DOC_PARAMS {
+    TableName: string;
+    Key: object;
 }
 
 export interface SCAN_DOC_PARAMS {

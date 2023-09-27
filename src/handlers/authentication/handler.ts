@@ -1,5 +1,5 @@
 import { getUserByEmailAndPwd } from "../users/handler";
-import { StatusCodes } from "http-status-codes";
+import { ReasonPhrases, StatusCodes } from "http-status-codes";
 import { loginInput } from "./interface";
 import { getCommonAPIResponse, getCommonAPIResponseByError, signJWT } from "../../utils/commonUtils";
 
@@ -11,7 +11,7 @@ export const login = async (input: loginInput) => {
     });
     try {
         if (!users) {
-            getCommonAPIResponseByError('No users found');
+            getCommonAPIResponseByError(ReasonPhrases.NOT_FOUND);
         }
         const user = users.data.find(user => user.userEmail === input.userEmail);
 
@@ -27,7 +27,7 @@ export const login = async (input: loginInput) => {
                 email: user.userEmail
             };
             const accessToken = signJWT(tokenPayload);
-            return getCommonAPIResponse({ message: 'success', data: { accessToken }, statusCode: StatusCodes.OK });
+            return getCommonAPIResponse({ message: ReasonPhrases.OK, data: { accessToken }, statusCode: StatusCodes.OK });
 
         } else {
 
